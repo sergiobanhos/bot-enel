@@ -142,9 +142,9 @@ export async function acquirePhoneLock(requestId: string, waitForLock: boolean =
 
       logger.info(`Request ${requestId} waiting for lock to be released from ${lockExists}`);
 
-      // Esperar até que o lock seja liberado, verificando a cada 5 segundos
+      // Esperar até que o lock seja liberado, verificando a cada 10 segundos
       let waitAttempts = 0;
-      const maxWaitAttempts = 120; // 10 minutos (5s * 120)
+      const maxWaitAttempts = 6; // 1 minuto (10s * 6)
 
       while (true) {
         // Verificar se o lock ainda existe
