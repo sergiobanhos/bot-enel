@@ -8,6 +8,7 @@ import { PHONE_CODE_KEY, waitForPhoneVerificationCode } from './phone-checker';
 import { waitForEmailVerificationCode } from './email-checker';
 import { ElementHandle, Page } from 'puppeteer';
 import { redisConnection } from './lib/redis';
+import { safeClickElement } from './utils';
 
 // Verification method types
 export enum VerificationMethod {
@@ -419,15 +420,12 @@ export async function handleVerificationCodeUI(
         }
 
         await takeScreenshot(page, sessionId, '14_depois_de_solicitar_codigo', screenshotPath);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
-        await takeScreenshot(page, sessionId, '15_depois_5_segundos', screenshotPath);
+        await new Promise((resolve) => setTimeout(resolve, 10000));
+        await takeScreenshot(page, sessionId, '15_depois_10_segundos', screenshotPath);
 
         // Click the continue button if available
-        const continueButton = await page.$("#CONTENT_Formulario_ContinuarSt3");
-        if (continueButton) {
-            await continueButton.click();
-            logger.info("Clicou no botão continuar");
-        }
+        await safeClickElement(page, "CONTENT_Formulario_ContinuarSt3");
+        logger.info("Clicou no botão continuar");
 
         await takeScreenshot(page, sessionId, '16_depois_de_clicar_no_continuar', screenshotPath);
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -456,7 +454,6 @@ export async function handleVerificationCodeUI(
             }
         } catch (error) {
             // Em caso de erro, garantir que o lock seja liberado
-            await new Promise((rs) => setTimeout(rs, 5000));
             if (selectedMethod === VerificationMethod.PHONE) {
                 await releasePhoneAccess(codeRequestId);
             } else {
@@ -469,6 +466,9 @@ export async function handleVerificationCodeUI(
         // Return the verification code
         return verificationCode;
     } catch (error) {
+        await releasePhoneAccess(jobId);
+        await releaseEmailAccess(jobId);
+
         logger.error(`Error handling verification code UI:`, error);
         return null;
     }
