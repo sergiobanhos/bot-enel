@@ -456,6 +456,7 @@ export async function handleVerificationCodeUI(
             }
         } catch (error) {
             // Em caso de erro, garantir que o lock seja liberado
+            await new Promise((rs) => setTimeout(rs, 5000));
             if (selectedMethod === VerificationMethod.PHONE) {
                 await releasePhoneAccess(codeRequestId);
             } else {

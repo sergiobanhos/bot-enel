@@ -160,7 +160,8 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 `--disable-extensions`,
                 `--mute-audio`,
             ].filter(Boolean),
-            executablePath: '/usr/bin/chromium',
+            executablePath: "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome",
+            // executablePath: "/usr/bin/chromium",
             defaultViewport: null,
             env: {
                 ...process.env,
@@ -506,12 +507,16 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 );
 
                 // Preencher o código no formulário se foi obtido com sucesso
-                if (verificationCodeInput && verificationCode) {
-                    await verificationCodeInput.click();
-                    await verificationCodeInput.type(verificationCode, { delay: 200 });
+                // Buscar o elemento novamente pois a referência antiga pode estar desconectada após handleVerificationCodeUI
+                const verificationCodeInputFresh = await page.$("#CONTENT_Formulario_CodigoSeguranca");
+                if (verificationCodeInputFresh && verificationCode) {
+                    await verificationCodeInputFresh.click();
+                    await verificationCodeInputFresh.type(verificationCode, { delay: 200 });
                     logger.info("Successfully entered verification code");
                 } else if (!verificationCode) {
                     throw new Error("Failed to get verification code from any method");
+                } else if (!verificationCodeInputFresh) {
+                    throw new Error("Verification code input not found after getting code");
                 }
 
                 await takeScreenshot(page, sessionId, '20_codigo_email_escrito', screenshotPath);
