@@ -6,12 +6,13 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3006:3006"
+    pull_policy: always
     volumes:
       # - .:/app
       - /app/node_modules
       - /app/dist
       - ./screenshots:/app/screenshots
-    command: ["/app/start-xvfb.sh", "node", "dist/server.js"]
+    command: [ "/app/start-xvfb.sh", "node", "dist/server.js" ]
     environment:
       - PORT=3006
       - NODE_ENV=development
@@ -36,7 +37,7 @@ services:
       - /app/dist
       - ./screenshots:/app/screenshots
     # command: pnpm exec tsx src/start-captcha-server.ts
-    command: ["node", "dist/start-captcha-server.js"]
+    command: [ "node", "dist/start-captcha-server.js" ]
     environment:
       - NODE_ENV=development
       - REDIS_HOST=redis

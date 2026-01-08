@@ -481,6 +481,16 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
 
                 await takeScreenshot(page, sessionId, '12_depois_5_segundos', screenshotPath);
 
+                // Verificar se o login foi bem-sucedido checando se o campo de código de verificação existe
+                const verificationCodeInput = await page.$("#CONTENT_Formulario_CodigoSeguranca");
+                if (!verificationCodeInput) {
+                    await takeScreenshot(page, sessionId, '12_erro_login_invalido', screenshotPath);
+                    logger.error("Login falhou - campo de código de verificação não encontrado. Credenciais inválidas.");
+                    throw new Error("Login inválido - verifique o número do cliente e CPF/CNPJ informados");
+                }
+
+                logger.info("Login bem-sucedido - campo de código de verificação encontrado");
+
                 // Usar o centralizador de verificação de código para lidar com ambos os métodos (telefone e email)
                 logger.info("Using centralized verification code handler...");
 
@@ -496,7 +506,6 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 );
 
                 // Preencher o código no formulário se foi obtido com sucesso
-                const verificationCodeInput = await page.$("#CONTENT_Formulario_CodigoSeguranca");
                 if (verificationCodeInput && verificationCode) {
                     await verificationCodeInput.click();
                     await verificationCodeInput.type(verificationCode, { delay: 200 });
