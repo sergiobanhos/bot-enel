@@ -160,8 +160,8 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 `--disable-extensions`,
                 `--mute-audio`,
             ].filter(Boolean),
-            executablePath: "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome",
-            // executablePath: "/usr/bin/chromium",
+            // executablePath: "/Applications/Google\ Chrome.app/Contents/MacOS/Google\ Chrome",
+            executablePath: "/usr/bin/chromium",
             defaultViewport: null,
             env: {
                 ...process.env,
