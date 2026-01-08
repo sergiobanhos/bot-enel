@@ -499,7 +499,7 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 // e escolhe automaticamente entre telefone e email com base na disponibilidade
                 const verificationCode = await handleVerificationCodeUI(
                     page,
-                    VerificationMethod.ANY, // Tentar qualquer método disponível
+                    VerificationMethod.PHONE, // Tentar qualquer método disponível
                     jobId,
                     screenshotPath,
                     sessionId,

@@ -8,7 +8,7 @@ import { PHONE_CODE_KEY, waitForPhoneVerificationCode } from './phone-checker';
 import { waitForEmailVerificationCode } from './email-checker';
 import { ElementHandle, Page } from 'puppeteer';
 import { redisConnection } from './lib/redis';
-import { safeClickElement } from './utils';
+import { safeClickElement, safeSearchElement } from './utils';
 
 // Verification method types
 export enum VerificationMethod {
@@ -251,11 +251,15 @@ export async function handleVerificationCodeUI(
     takeScreenshot: (page: any, sessionId: string, name: string, path: string) => Promise<string | void>
 ): Promise<string | null> {
     try {
-        // Find available verification methods on the page
-        const phoneInput = await page.$('input[value*="569"]');
-        const emailInput = await page.$('input[value^="co"][value*="@gmail.com"]');
+        const phoneInput = await safeSearchElement(page, 'input[value*="569"]', {
+            retries: 5,
+            delay: 2000
+        });
+        const emailInput = await safeSearchElement(page, 'input[value^="co"][value*="@gmail.com"]', {
+            retries: 5,
+            delay: 2000
+        });
 
-        // Verificar a disponibilidade dos locks
         const [isPhoneLockAvailable, isEmailLockAvailable] = await Promise.all([
             checkPhoneLockAvailability(),
             checkEmailLockAvailability()
@@ -263,7 +267,6 @@ export async function handleVerificationCodeUI(
 
         logger.info(`Disponibilidade dos locks: Telefone=${isPhoneLockAvailable}, Email=${isEmailLockAvailable}`);
 
-        // Determine which method to use based on availability and preference
         let selectedMethod = method;
         let selectedInput: any = null;
 

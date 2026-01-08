@@ -115,6 +115,44 @@ export async function safeClickElement(
     );
 }
 
+export interface SafeSearchOptions {
+    /** Number of retry attempts (default: 3) */
+    retries?: number;
+    /** Delay between retries in milliseconds (default: 1500) */
+    delay?: number;
+}
+
+/**
+ * Safely searches for an element by CSS selector with retry logic.
+ * Searches on each attempt, useful when the element may not exist yet.
+ * 
+ * @param page - Puppeteer Page instance
+ * @param selector - CSS selector for the element
+ * @param options - Configuration options for retries and delays
+ * @returns The ElementHandle if found, null if not found after all retries
+ */
+export async function safeSearchElement<T extends Element = Element>(
+    page: Page,
+    selector: string,
+    options: SafeSearchOptions = {}
+): Promise<ElementHandle<T> | null> {
+    const { retries = 3, delay = 1500 } = options;
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        const element = await page.$(selector) as ElementHandle<T> | null;
+
+        if (element) {
+            return element;
+        }
+
+        if (attempt < retries) {
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+
+    return null;
+}
+
 const execPromise = promisify(exec);
 
 // Alternative approach using qpdf external tool
