@@ -484,11 +484,8 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                 await takeScreenshot(page, sessionId, '12_depois_5_segundos', screenshotPath);
 
                 // Verificar se o login foi bem-sucedido checando se o campo de código de verificação existe
-                const sendButton = await safeSearchElement(page, "#CONTENT_Formulario_EnviarSt2", {
-                    retries: 3,
-                    delay: 2000
-                });
-                if (!sendButton) {
+                const submitButtonStillExists = await page.$("#CONTENT_Formulario_Solicitar");
+                if (submitButtonStillExists) {
                     await takeScreenshot(page, sessionId, '12_erro_login_invalido', screenshotPath);
                     logger.error("Login falhou - campo de código de verificação não encontrado. Credenciais inválidas.");
                     throw new Error("Login inválido - verifique o número do cliente e CPF/CNPJ informados");
