@@ -31,6 +31,7 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3007:3000"
+    pull_policy: always
     volumes:
       # - .:/app
       - /app/node_modules
