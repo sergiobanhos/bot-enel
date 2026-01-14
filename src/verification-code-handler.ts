@@ -473,6 +473,6 @@ export async function handleVerificationCodeUI(
         await releaseEmailAccess(jobId);
 
         logger.error(`Error handling verification code UI:`, error);
-        return null;
+        throw error;
     }
 }

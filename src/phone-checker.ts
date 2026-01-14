@@ -18,14 +18,10 @@ export async function getVerificationCodeFromPhone(): Promise<string | null> {
     // await redisConnection.del(PHONE_CODE_KEY);
     const startTime = Date.now();
     try {
-        const maxWaitTimeMs = 1000 * 60 * 3; // 3 minutes
+        const maxWaitTimeMs = 1000 * 60 * 5; // 5 minutes
 
         while (Date.now() - startTime < maxWaitTimeMs) {
             const code = await redisConnection.get(PHONE_CODE_KEY);
-
-            console.log({
-                code
-            })
 
             if (code && code.length > 2) {
                 logger.info('Verification code found in phone: ' + code);
