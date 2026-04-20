@@ -45,6 +45,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { handleVerificationCodeUI, VerificationMethod } from "./verification-code-handler";
 import { webhookQueue } from "./queues/webhook-queue";
 import { safeSearchElement } from "./utils";
+import { assertVerificationCodeReceived, isExtractionFlowError, toPublicExtractionError } from "./extraction-errors";
 
 // Constants
 const CAPTCHA_API_KEY = 'ca7f179fa037be3fd8d1587eaf57939e';
@@ -501,14 +502,24 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
 
                 // Usar o método handleVerificationCodeUI que gerencia toda a interação com a página
                 // e escolhe automaticamente entre telefone e email com base na disponibilidade
-                const verificationCode = await handleVerificationCodeUI(
-                    page,
-                    VerificationMethod.PHONE, // Tentar qualquer método disponível
-                    jobId,
-                    screenshotPath,
-                    sessionId,
-                    takeScreenshot
-                );
+                let verificationCode: string;
+
+                try {
+                    verificationCode = assertVerificationCodeReceived(await handleVerificationCodeUI(
+                        page,
+                        VerificationMethod.PHONE, // Tentar qualquer método disponível
+                        jobId,
+                        screenshotPath,
+                        sessionId,
+                        takeScreenshot
+                    ));
+                } catch (error) {
+                    if (isExtractionFlowError(error)) {
+                        logger.warn(`Verification flow failed with classified error: ${error.code} - ${error.message}`);
+                    }
+
+                    throw toPublicExtractionError(error);
+                }
 
                 // Preencher o código no formulário se foi obtido com sucesso
                 // Buscar o elemento novamente pois a referência antiga pode estar desconectada após handleVerificationCodeUI
@@ -517,8 +528,6 @@ export async function extractInvoiceSegundaVia({ jobId, webhookUrl, numeroClient
                     await verificationCodeInputFresh.click();
                     await verificationCodeInputFresh.type(verificationCode, { delay: 200 });
                     logger.info("Successfully entered verification code");
-                } else if (!verificationCode) {
-                    throw new Error("Failed to get verification code from any method");
                 } else if (!verificationCodeInputFresh) {
                     throw new Error("Verification code input not found after getting code");
                 }

@@ -9,6 +9,11 @@ import { waitForEmailVerificationCode } from './email-checker';
 import { ElementHandle, Page } from 'puppeteer';
 import { redisConnection } from './lib/redis';
 import { safeClickElement, safeSearchElement } from './utils';
+import {
+    assertVerificationCodeReceived,
+    assertVerificationMethodsAvailable,
+    createNoCustomerRegistrationError,
+} from './extraction-errors';
 
 // Verification method types
 export enum VerificationMethod {
@@ -271,6 +276,11 @@ export async function handleVerificationCodeUI(
         let selectedInput: any = null;
 
         if (method === VerificationMethod.ANY) {
+            assertVerificationMethodsAvailable({
+                phoneAvailable: Boolean(phoneInput),
+                emailAvailable: Boolean(emailInput),
+            });
+
             // Se ambos os métodos estão disponíveis na página
             if (phoneInput && emailInput) {
                 // Verificar a disponibilidade dos locks para decidir qual usar
@@ -298,8 +308,6 @@ export async function handleVerificationCodeUI(
                 selectedMethod = VerificationMethod.EMAIL;
                 selectedInput = emailInput;
                 logger.info('Usando email porque é o único disponível na página');
-            } else {
-                throw new Error("Nenhum método de verificação disponível na página");
             }
         } else if (method === VerificationMethod.PHONE) {
             // Usuário solicitou especificamente telefone
@@ -313,7 +321,7 @@ export async function handleVerificationCodeUI(
                     selectedInput = emailInput;
                     logger.info('Telefone foi solicitado mas não está disponível na página, usando email como fallback');
                 } else {
-                    throw new Error("Método de verificação por telefone solicitado, mas não está disponível na página");
+                    throw createNoCustomerRegistrationError();
                 }
             }
         } else if (method === VerificationMethod.EMAIL) {
@@ -328,7 +336,7 @@ export async function handleVerificationCodeUI(
                     selectedInput = phoneInput;
                     logger.info('Email foi solicitado mas não está disponível na página, usando telefone como fallback');
                 } else {
-                    throw new Error("Método de verificação por email solicitado, mas não está disponível na página");
+                    throw createNoCustomerRegistrationError();
                 }
             }
         }
@@ -450,11 +458,8 @@ export async function handleVerificationCodeUI(
                 await releaseEmailAccess(codeRequestId);
             }
 
-            if (!verificationCode) {
-                logger.error(`Não foi possível obter o código de verificação`);
-            } else {
-                logger.info(`Código de verificação recebido com sucesso: ${verificationCode}`);
-            }
+            verificationCode = assertVerificationCodeReceived(verificationCode);
+            logger.info(`Código de verificação recebido com sucesso: ${verificationCode}`);
         } catch (error) {
             // Em caso de erro, garantir que o lock seja liberado
             if (selectedMethod === VerificationMethod.PHONE) {
@@ -463,6 +468,7 @@ export async function handleVerificationCodeUI(
                 await releaseEmailAccess(codeRequestId);
             }
             logger.error(`Erro ao aguardar código de verificação:`, error);
+            throw error;
         }
 
 
